@@ -1,0 +1,3 @@
+APP_TITLE = "PyQt6 Lesson 3 Project"
+WINDOW_WIDTH = 400
+WINDOW_HEIGHT = 300
