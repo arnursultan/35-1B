@@ -1,4 +1,4 @@
-import sys, json, urllib.request, urllib.parse, ssl, time
+import sys, json, urllib.request, ssl, time
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QComboBox, QDoubleSpinBox, QPushButton, QMessageBox
