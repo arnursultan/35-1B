@@ -8,6 +8,10 @@ venv/
 .venv/
 
 db.sqlite3
+games.db
+students.database
+students.db
+
 staticfiles/
 media/
 *.log
