@@ -2,7 +2,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = ''
+SECRET_KEY = 'django-insecure-2*i#)c3dn+(4hvmtxzs%vme8u4)jk2mm3x0ow+8p))sc7i_#cr'
 
 DEBUG = True
 
@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "rest_framework",
 
     "users",
+    "products",
 ]
 
 MIDDLEWARE = [
