@@ -119,7 +119,7 @@ class MyProductView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        products = Product.objects.all(
+        products = Product.objects.filter(
             owner=request.user
         ).select_related("category")
         serializer = ProductSerializer(products, many=True, context={"request": request})
