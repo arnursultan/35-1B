@@ -1,10 +1,21 @@
-from django.contrib.auth import login, logout
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import LoginSerializer, RegisterSerializer, UserProfileSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    CustomTokenObtainPairSerializer,
+    RegisterSerializer,
+    UserProfileSerializer,
+)
+
+class LoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -18,22 +29,28 @@ class RegisterView(APIView):
             status.HTTP_201_CREATED,
         )
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        login(request, user)
-        return Response({"message": f"Добро пожаловать, {user.full_name}"})
-
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)
-        return Response({"message": "Выход выполнен"})
+        try:
+            refresh_token = request.data("refresh")
+            if not refresh_token:
+                return Response(
+                    {"error": "Refresh токен обязателен"},
+                     status=status.HTTP_400_BAD_REQUEST
+                )
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Выход выполнен"},
+                            status.HTTP_200_OK),
+        except TokenError:
+
+            return Response(
+                {"error": "Токен недействителен или уже использован"},
+                status.HTTP_400_BAD_REQUEST
+            )
+
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -49,3 +66,14 @@ class ProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Пароль успешно изменён"})

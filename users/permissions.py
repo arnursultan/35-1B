@@ -12,7 +12,7 @@ class IsAdminRole(RolePermissionMixin, BasePermission):
     def has_permission(self, request, view):
         return self.get_user_role(request) == "admin"
 
-class IsManageerRole(RolePermissionMixin, BasePermission):
+class IsManagerRole(RolePermissionMixin, BasePermission):
     message = "Доступ только для менеджеров"
 
     def has_permission(self, request, view):
