@@ -24,10 +24,7 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response(
-            {"message": "Регистрация успешна", "user_id": user.id},
-            status.HTTP_201_CREATED,
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED,)
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

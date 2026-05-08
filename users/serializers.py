@@ -24,6 +24,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password  = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True)
+    tokens    = serializers.SerializerMethodField()
 
     class Meta:
         model  = CustomUser
