@@ -11,3 +11,13 @@ urlpatterns = [
     path("me/",             ProfileView.as_view(),          name="profile"),
     path("me/password/",    ChangePasswordView.as_view(),   name="change_password")
 ]
+
+# SCOPE - разрешения
+#
+# client_id - ID нашего приложения
+# client_secret - секрет приложения, ключ
+#
+# code - временный код от Google
+# access token - токен Гугл для получения данных юзера
+# redirect uri - куда Гугл вернёт юзера после логина
+#
