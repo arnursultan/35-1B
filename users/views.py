@@ -31,21 +31,26 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data("refresh")
+            refresh_token = request.data.get("refresh")
+
             if not refresh_token:
                 return Response(
                     {"error": "Refresh токен обязателен"},
-                     status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST
                 )
+
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"message": "Выход выполнен"},
-                            status.HTTP_200_OK),
-        except TokenError:
 
             return Response(
+                {"message": "Выход выполнен"},
+                status=status.HTTP_200_OK
+            )
+
+        except TokenError:
+            return Response(
                 {"error": "Токен недействителен или уже использован"},
-                status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
