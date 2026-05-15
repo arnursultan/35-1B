@@ -85,7 +85,7 @@ class GoogleCallbackSerializer(serializers.Serializer):
     code = serializers.CharField()
 
     def validate(self, attrs):
-        code = attrs.get["code"]
+        code = attrs.get("code")
 
         try:
             google_data = GoogleOAuthService.get_google_user_data(code)
@@ -108,7 +108,7 @@ class GoogleCallbackSerializer(serializers.Serializer):
                 "last_name":    last_name,
                 "google_id":    google_id,
                 "avatar":       avatar,
-                "role":         CustomUser.ROLE_CLIENT
+                "role":         CustomUser.Role.CLIENT,
             }
         )
 
