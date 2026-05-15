@@ -2,6 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from .services.google import GoogleOAuthService
 
 
 from .models import CustomUser
@@ -79,3 +80,57 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save()
         return user
+
+class GoogleCallbackSerializer(serializers.Serializer):
+    code = serializers.CharField()
+
+    def validate(self, attrs):
+        code = attrs.get["code"]
+
+        try:
+            google_data = GoogleOAuthService.get_google_user_data(code)
+        except Exception as e:
+            raise serializers.ValidationError(f"Ошибка Google OAuth: {str(e)}")
+
+        email       = google_data.get("email")
+        google_id   = google_data.get("id")
+        first_name  = google_data.get("given_name", "")
+        last_name   = google_data.get("family_name", "")
+        avatar      = google_data.get("picture", "")
+
+        if not email:
+            raise serializers.ValidationError("Google не вернул email")
+
+        user, created = CustomUser.objects.get_or_create(
+            email=email,
+            defaults={
+                "first_name":   first_name,
+                "last_name":    last_name,
+                "google_id":    google_id,
+                "avatar":       avatar,
+                "role":         CustomUser.ROLE_CLIENT
+            }
+        )
+
+        if not created:
+            updated = False
+            if not user.google_id:
+                user.google_id = google_id
+                updated = True
+            if not user.avatar:
+                user.avatar = avatar
+                updated = True
+            if updated:
+                user.save()
+
+        refresh = RefreshToken.for_user(user)
+        refresh["email"]    = user.email
+        refresh["role"]     = user.role
+
+        attrs["tokens"] = {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
+        attrs["user"]       = user
+        attrs["created"]    = created
+        return attrs

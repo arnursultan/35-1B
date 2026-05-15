@@ -5,12 +5,15 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.conf import settings
+from .services.google import GoogleOAuthService
 
 from .serializers import (
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
     UserProfileSerializer,
+    GoogleCallbackSerializer,
 )
 
 class LoginView(TokenObtainPairView):
@@ -79,3 +82,35 @@ class ChangePasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Пароль успешно изменён"})
+
+class GoogleAuthUrlView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        url = GoogleOAuthService.get_auth_url()
+        return Response({"url": url})
+
+class GoogleCallbackView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        code = request.query_params.get("code")
+
+        if not code:
+            return Response(
+                {"error": "Code не передан"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = GoogleCallbackSerializer(data={"code": code})
+        serializer.is_valid(raise_exception=True)
+
+        data    = serializer.validated_data
+        user    = data["user"]
+        created = data["created"]
+
+        return Response({
+            "message": "Новый аккаунт создан" if created else "Добро пожаловать",
+            "email":    user.email,
+            "role":     user.role,
+            "tokens":   data["tokens"],
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
