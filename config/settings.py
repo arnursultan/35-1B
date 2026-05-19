@@ -28,8 +28,12 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
 
+    "django_celery_beat",
+    "django_celery_results",
+
     "users",
     "products",
+    "notifications",
 ]
 
 
@@ -140,3 +144,18 @@ GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile",
     "openid",
 ]
+
+REDIS_URL = "redis://localhost:6379/0"
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Bishkek"
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_RESULT_BACKEND = "django-db"
+
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheluer"
+
