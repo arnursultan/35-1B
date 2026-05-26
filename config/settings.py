@@ -157,7 +157,7 @@ CELERY_TASK_TRACK_STARTED = True
 
 CELERY_RESULT_BACKEND = "django-db"
 
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheluer"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

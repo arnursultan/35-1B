@@ -1,3 +1,6 @@
+import logging
+
+from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -5,20 +8,20 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.conf import settings
-from .services.google import GoogleOAuthService
+
+from notifications.tasks import send_welcome_email
 
 from .serializers import (
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
+    GoogleCallbackSerializer,
     RegisterSerializer,
     UserProfileSerializer,
-    GoogleCallbackSerializer,
 )
+from .services.google import GoogleOAuthService
 
-class LoginView(TokenObtainPairView):
-    permission_classes = [AllowAny]
-    serializer_class = CustomTokenObtainPairSerializer
+logger = logging.getLogger(__name__)
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -27,7 +30,16 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED,)
+
+        send_welcome_email.delay(user.id)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class LoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -66,22 +78,29 @@ class ProfileView(APIView):
 
     def patch(self, request):
         serializer = UserProfileSerializer(
-            request.user, data=request.data, partial=True
+            request.user,
+            data=request.data,
+            partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response(serializer.data)
+
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = ChangePasswordSerializer(
-            data=request.data, context={"request": request}
+            data=request.data,
+            context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response({"message": "Пароль успешно изменён"})
+
 
 class GoogleAuthUrlView(APIView):
     permission_classes = [AllowAny]
@@ -89,6 +108,7 @@ class GoogleAuthUrlView(APIView):
     def get(self, request):
         url = GoogleOAuthService.get_auth_url()
         return Response({"url": url})
+
 
 class GoogleCallbackView(APIView):
     permission_classes = [AllowAny]
@@ -101,16 +121,20 @@ class GoogleCallbackView(APIView):
                 {"error": "Code не передан"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         serializer = GoogleCallbackSerializer(data={"code": code})
         serializer.is_valid(raise_exception=True)
 
-        data    = serializer.validated_data
-        user    = data["user"]
+        data = serializer.validated_data
+        user = data["user"]
         created = data["created"]
+
+        if created:
+            send_welcome_email.delay(user.id)
 
         return Response({
             "message": "Новый аккаунт создан" if created else "Добро пожаловать",
-            "email":    user.email,
-            "role":     user.role,
-            "tokens":   data["tokens"],
+            "email": user.email,
+            "role": user.role,
+            "tokens": data["tokens"],
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)

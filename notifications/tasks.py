@@ -12,6 +12,10 @@ from .models import Notification
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+@shared_task
+def test_periodic_task():
+    logger.info("Periodic task works")
+    return "OK"
 
 @shared_task
 def add_numbers(a, b):
