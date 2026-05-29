@@ -12,12 +12,6 @@ app.autodiscover_tasks()
 
 
 app.conf.beat_schedule = {
-
-    "test-every-10-seconds": {
-        "task":     "notifications.tasks.test_periodic_task",
-        "schedule": 10.0,
-    },
-
     "daily-report-9am": {
         "task":     "notifications.tasks.send_daily_report",
         "schedule": crontab(hour=9, minute=0),
